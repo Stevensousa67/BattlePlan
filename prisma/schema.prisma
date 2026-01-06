@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "./generated"
@@ -8,21 +7,22 @@ datasource db {
   provider = "postgresql"
 }
 
-// Better-Auth models
+/* =========================
+   Better-Auth Core Models + Stripe Plugin
+   ========================= */
 
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  players       Player[]
-
-  stripeCustomerId String?
+  id                String    @id
+  name              String
+  email             String
+  emailVerified     Boolean   @default(false)
+  image             String?
+  stripeCustomerId  String?
+  sessions          Session[]
+  accounts          Account[]
+  players           Player[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@unique([email])
   @@map("user")
@@ -32,12 +32,12 @@ model Session {
   id        String   @id
   expiresAt DateTime
   token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
   ipAddress String?
   userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([token])
   @@index([userId])
@@ -45,11 +45,11 @@ model Session {
 }
 
 model Account {
-  id                    String    @id
+  id                    String   @id
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -57,8 +57,8 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@index([userId])
   @@map("account")
@@ -76,7 +76,31 @@ model Verification {
   @@map("verification")
 }
 
-// BattlePlan Models
+model Subscription {
+  id                   String   @id
+  plan                 String
+  referenceId          String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               String?  @default("incomplete")
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  cancelAtPeriodEnd    Boolean? @default(false)
+  cancelAt             DateTime?
+  canceledAt           DateTime?
+  endedAt              DateTime?
+
+  seats                Int?
+
+  @@index([referenceId])
+  @@map("subscription")
+}
+
+/* =========================
+   Enums
+   ========================= */
 
 enum ClanRole {
   leader
@@ -101,23 +125,32 @@ enum VerificationStatus {
   invalid
 }
 
+enum ClanFeatureKey {
+  reminders
+  warPlanner
+  shameLog
+  analytics
+}
+
+/* =========================
+   Domain Models
+   ========================= */
+
 model Player {
-  tag           String @id
+  tag           String   @id
   name          String
   townHallLevel Int
-  userId        String
-  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  verifiedAt   DateTime
-  lastSyncedAt DateTime?
-
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  verifiedAt    DateTime?
+  lastSyncedAt  DateTime?
   memberships   ClanMember[]
   verifications PlayerVerification[]
   ownedClans    Clan[]
   warMembers    WarMember[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  deletedAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model PlayerVerification {
@@ -125,42 +158,41 @@ model PlayerVerification {
   playerTag  String
   tokenHash  String
   status     VerificationStatus
+  reason     String?
   verifiedAt DateTime?
   expiresAt  DateTime?
-
-  player Player @relation(fields: [playerTag], references: [tag], onDelete: Cascade)
+  player     Player @relation(fields: [playerTag], references: [tag], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 
   @@index([playerTag])
 }
 
 model Clan {
-  tag            String  @id
-  name           String
-  level          Int
-  description    String?
-  ownerPlayerTag String
-
-  ownerPlayer   Player         @relation(fields: [ownerPlayerTag], references: [tag])
-  members       ClanMember[]
-  wars          War[]
-  features      ClanFeature[]
-
-  lastSyncedAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tag              String   @id
+  name             String
+  level            Int
+  description      String?
+  ownerPlayerTag   String
+  claimedAt        DateTime
+  ownerPlayer      Player  @relation(fields: [ownerPlayerTag], references: [tag])
+  members          ClanMember[]
+  wars             War[]
+  features         ClanFeature[]
+  lastSyncedAt     DateTime?
+  deletedAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model ClanMember {
-  clanTag   String
-  playerTag String
-  role      ClanRole // leader | coLeader | elder | member
-
-  clan   Clan   @relation(fields: [clanTag], references: [tag], onDelete: Cascade)
-  player Player @relation(fields: [playerTag], references: [tag], onDelete: Cascade)
-
-  joinedAt DateTime
-  leftAt   DateTime?
+  clanTag       String
+  playerTag     String
+  role          ClanRole
+  roleVerifiedAt DateTime?
+  clan           Clan   @relation(fields: [clanTag], references: [tag], onDelete: Cascade)
+  player         Player @relation(fields: [playerTag], references: [tag], onDelete: Cascade)
+  joinedAt       DateTime
+  leftAt         DateTime?
 
   @@id([clanTag, playerTag])
   @@index([playerTag])
@@ -173,19 +205,16 @@ model War {
   type        WarType
   state       WarState
   teamSize    Int
-
-  startTime DateTime
-  endTime   DateTime
-
+  startTime   DateTime
+  endTime     DateTime
   clanStars           Int
   opponentStars       Int
   clanDestruction     Float
   opponentDestruction Float
-
-  clan    Clan        @relation(fields: [clanTag], references: [tag], onDelete: Cascade)
-  members WarMember[]
-
-  createdAt DateTime @default(now())
+  syncedAt    DateTime?
+  clan        Clan        @relation(fields: [clanTag], references: [tag], onDelete: Cascade)
+  members     WarMember[]
+  createdAt   DateTime @default(now())
 
   @@index([clanTag])
   @@index([opponentTag])
@@ -193,66 +222,39 @@ model War {
 }
 
 model WarMember {
-  id          String @id @default(cuid())
-  warId       String
-  playerTag   String
-  mapPosition Int
-  townHall    Int
-
-  attacks Attack[]
-
-  war    War    @relation(fields: [warId], references: [id], onDelete: Cascade)
-  player Player @relation(fields: [playerTag], references: [tag])
+  id              String @id @default(cuid())
+  warId           String
+  playerTag       String
+  mapPosition     Int
+  townHall        Int
+  expectedAttacks Int    @default(2)
+  attacks         Attack[]
+  war             War    @relation(fields: [warId], references: [id], onDelete: Cascade)
+  player          Player @relation(fields: [playerTag], references: [tag])
 
   @@index([playerTag])
 }
 
 model Attack {
-  id          String @id @default(cuid())
-  warMemberId String
-  defenderTag String
-  stars       Int
-  destruction Float
-  duration    Int
-  order       Int
-
-  warMember WarMember @relation(fields: [warMemberId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
+  id            String @id @default(cuid())
+  warMemberId   String
+  defenderTag   String?
+  stars         Int
+  destruction   Float
+  duration      Int
+  order         Int
+  isCleanup     Boolean @default(false)
+  warMember     WarMember @relation(fields: [warMemberId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
 
   @@index([defenderTag])
 }
 
-model Subscription {
-  id                   String    @id
-  plan                 String
-  referenceId          String
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  status               String
-  periodStart          DateTime?
-  periodEnd            DateTime?
-  cancelAtPeriodEnd    Boolean?
-  cancelAt             DateTime?
-  canceledAt           DateTime?
-  endedAt              DateTime?
-  seats                Int?
-  trialStart           DateTime?
-  trialEnd             DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([referenceId])
-  @@map("subscription")
-}
-
 model ClanFeature {
   clanTag String
-  feature String
+  feature ClanFeatureKey
   enabled Boolean @default(false)
-
-  clan Clan @relation(fields: [clanTag], references: [tag], onDelete: Cascade)
+  clan    Clan @relation(fields: [clanTag], references: [tag], onDelete: Cascade)
 
   @@id([clanTag, feature])
 }
