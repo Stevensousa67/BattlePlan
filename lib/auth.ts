@@ -18,10 +18,12 @@ export const auth = betterAuth({
     },
     socialProviders: {
         google: {
+            prompt: "select_account",
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         },
         microsoft: {
+            prompt: "select_account",
             clientId: process.env.MICROSOFT_CLIENT_ID!,
             clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
         },
