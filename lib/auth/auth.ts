@@ -1,8 +1,9 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { prisma } from "./prisma";
+import { prisma } from "../prisma";
 import { stripe } from "@better-auth/stripe";
 import Stripe from "stripe";
+import { nextCookies } from "better-auth/next-js";
 
 // Initialize Stripe integration
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -77,6 +78,6 @@ export const auth = betterAuth({
                     return isOwner;
                 }
             }
-        })
-    ]
+        }),
+    nextCookies()],
 });

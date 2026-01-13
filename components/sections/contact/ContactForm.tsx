@@ -1,27 +1,26 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { useState } from "react";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner"
-
-
-const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters long"),
-  email: z.string().email("Invalid email address"),
-  message: z.string().min(10, "Message must be at least 10 characters long"),
-});
+import { toast } from "sonner";
+import { contactFormSchema, type ContactFormData } from "@/lib/schemas/contact";
 
 export function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Define the form schema using Zod
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<ContactFormData>({
+    resolver: zodResolver(contactFormSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -29,15 +28,14 @@ export function ContactForm() {
     },
   });
 
-  // Handle form submission
-  async function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: ContactFormData) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/email', {
-        method: 'POST',
+      const response = await fetch("/api/email", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
@@ -45,21 +43,21 @@ export function ContactForm() {
       const result = await response.json();
 
       if (response.ok) {
-        toast('Message sent successfully! I\'ll get back to you soon.', {
-          position: 'bottom-right',
+        toast("Message sent successfully! I'll get back to you soon.", {
+          position: "bottom-right",
           duration: 5000,
         });
         form.reset();
       } else {
-        toast(result.error || 'Failed to send message. Please try again.', {
-          position: 'bottom-right',
+        toast(result.error || "Failed to send message. Please try again.", {
+          position: "bottom-right",
           duration: 5000,
         });
       }
     } catch (error) {
-      console.error('Form submission error:', error);
-      toast('Network error. Please check your connection and try again.', {
-        position: 'top-right',
+      console.error("Form submission error:", error);
+      toast("Network error. Please check your connection and try again.", {
+        position: "top-right",
         duration: 5000,
       });
     } finally {
@@ -128,9 +126,12 @@ export function ContactForm() {
             />
           </div>
 
-          {/* Submit Button */}
-          <Button type="submit" className="w-1/4 hover:underline" disabled={isSubmitting} >
-            {isSubmitting ? 'Sending...' : 'Send'}
+          <Button
+            type="submit"
+            className="w-1/4 hover:underline"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Sending..." : "Send"}
           </Button>
         </form>
       </Form>

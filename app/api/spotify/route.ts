@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
 
+/**
+ * Spotify "Now Playing" API
+ * 
+ * Setup (one-time):
+ * 1. Go to https://accounts.spotify.com/authorize?client_id=YOUR_CLIENT_ID&response_type=code&redirect_uri=YOUR_REDIRECT_URI&scope=user-read-currently-playing%20user-read-playback-state
+ * 2. Authorize and copy the `code` from the redirect URL
+ * 3. Exchange it for tokens via POST to https://accounts.spotify.com/api/token
+ * 4. Save the refresh_token to SPOTIFY_REFRESH_TOKEN in .env.local
+ */
+
 // In-memory store for access token and expiration
 let accessToken: string | null = null;
 let tokenExpiration: number | null = null;
