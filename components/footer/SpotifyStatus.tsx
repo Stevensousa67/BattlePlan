@@ -1,26 +1,19 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+"use client";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import type { SpotifyStatus } from "@/lib/types";
 
-interface SpotifyStatus {
-  isListening: boolean;
-  trackName?: string;
-  artistName?: string;
-  message?: string;
-  itemType?: string;
-}
-
-export default function SpotifyStatus() {
+export default function SpotifyStatusComponent() {
   const [status, setStatus] = useState<SpotifyStatus>({ isListening: false });
 
   useEffect(() => {
     async function fetchSpotifyStatus() {
       try {
-        const response = await fetch('api/spotify');
+        const response = await fetch("api/spotify");
         const data: SpotifyStatus = await response.json();
         setStatus(data);
       } catch {
-        setStatus({ isListening: false, message: 'Error fetching Spotify data' });
+        setStatus({ isListening: false, message: "Error fetching Spotify data" });
       }
     }
     fetchSpotifyStatus();
@@ -30,10 +23,10 @@ export default function SpotifyStatus() {
 
   const formatNowPlaying = () => {
     if (!status.isListening) {
-      return status.message || 'Not listening to Spotify';
+      return status.message || "Not listening to Spotify";
     }
 
-    if (status.itemType === 'episode') {
+    if (status.itemType === "episode") {
       return `Now Playing: ${status.trackName} from ${status.artistName}`;
     } else {
       return `Now Playing: ${status.trackName} by ${status.artistName}`;
@@ -41,12 +34,16 @@ export default function SpotifyStatus() {
   };
 
   return (
-    <>
-      <AnimatePresence mode="wait">
-        <motion.p key={`${status.isListening}-${status.trackName}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="">
-          {formatNowPlaying()}
-        </motion.p>
-      </AnimatePresence>
-    </>
+    <AnimatePresence mode="wait">
+      <motion.p
+        key={`${status.isListening}-${status.trackName}`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3 }}
+      >
+        {formatNowPlaying()}
+      </motion.p>
+    </AnimatePresence>
   );
 }

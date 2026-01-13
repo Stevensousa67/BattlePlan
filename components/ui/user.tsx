@@ -3,7 +3,7 @@ import Link from "next/link"
 import { UserRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { authClient } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth/auth-client"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 

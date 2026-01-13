@@ -1,41 +1,35 @@
-interface socialMedia {
-    name: string;
-    url: string;
-    icon: string;
-    isBlack?: boolean;
-}
+import type { SocialMediaItem } from "@/lib/types";
+import { ASSETS } from "@/lib/constants";
 
-const baseUrl = "/svgs/";
-
-export const socialMedia: socialMedia[] = [
-    {
-        name: "GitHub",
-        url: `${process.env.GitHub_URL}`,
-        icon: `${baseUrl}github.svg`,
-        isBlack: true,
-    },
-    {
-        name: "LinkedIn",
-        url: `${process.env.LinkedIn_URL}`,
-        icon: `${baseUrl}linkedin.svg`,
-        isBlack: true,
-    },
-    {
-        name: "Personal Website",
-        url: `${process.env.Personal_Website_URL}`,
-        icon: `${baseUrl}earth.svg`,
-        isBlack: true,
-    },
-    {
-        name: "Discord",
-        url: `${process.env.Discord_Profile}`,
-        icon: `${baseUrl}discord.svg`,
-        isBlack: true,
-    },
-    {
-        name: "Youtube",
-        url: `${process.env.Youtube_URL}`,
-        icon: `${baseUrl}youtube.svg`,
-        isBlack: true,
-    }
+export const socialMedia: SocialMediaItem[] = [
+  {
+    name: "GitHub",
+    url: `${process.env.GitHub_URL}`,
+    icon: `${ASSETS.svgBasePath}github.svg`,
+    isBlack: true,
+  },
+  {
+    name: "LinkedIn",
+    url: `${process.env.LinkedIn_URL}`,
+    icon: `${ASSETS.svgBasePath}linkedin.svg`,
+    isBlack: true,
+  },
+  {
+    name: "Personal Website",
+    url: `${process.env.Personal_Website_URL}`,
+    icon: `${ASSETS.svgBasePath}earth.svg`,
+    isBlack: true,
+  },
+  {
+    name: "Discord",
+    url: `${process.env.Discord_Profile}`,
+    icon: `${ASSETS.svgBasePath}discord.svg`,
+    isBlack: true,
+  },
+  {
+    name: "Youtube",
+    url: `${process.env.Youtube_URL}`,
+    icon: `${ASSETS.svgBasePath}youtube.svg`,
+    isBlack: true,
+  },
 ];
